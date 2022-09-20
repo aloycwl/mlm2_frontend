@@ -6,20 +6,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.7.4/web3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <script src="93n.js"></script>
-    <style>
-      .text {
-        color: black;
-        text-decoration: none;
-        cursor: text;
-      }
-      a {
-        color: blue;
-        text-decoration: underline;
-        cursor: pointer;
-      }
-    </style>
   </head>
-  <body style="height: 100%">
+  <body>
     <button id="connect" onclick="connect()">Connect</button>
     <h1>Dashboard</h1>
     <b id="txtUSDT"></b> USDT <b id="txt93N"></b> 93N<br /><br />
@@ -34,19 +22,17 @@
       <option value="3">Super node</option>
       <option value="4">Asset node</option>
     </select>
-    <input id="dNum" type="number" value="1" />
+    <input id="dNum" type="number" value="1" min="1" />
     <button id="stakeBtn" onclick="deposit()">Purchase</button><br /><br />
-    <div id="clubNodes">DISPLAY ALL CLUB NODES HERE (selectable)</div>
-    <button>Merge (display only if there is node)</button><br /><br />
     <button onclick="disUser(acct,1)">View package & downline</button> /
     <button onclick="loadEarnings('history','')">
       View all earning history
     </button>
     /
-    <button id="withBtn" onclick="stake()">Withdraw</button>
+    <button id="withBtn" onclick="stake()">Withdraw</button> /
+    <button id="dMerge" onclick="merge()" disabled>Merge</button>
     <ol id="lv1"></ol>
-    <textarea id="history" rows="25" cols="100" readonly></textarea>
-
+    <textarea id="history" rows="20" cols="80" readonly></textarea>
     <h1>SWAP</h1>
     <a
       href="https://testnet.bscscan.com/address/0x0FED3B32dfAceD0ed77D1F2b92F4049587CB898e#writeContract"
