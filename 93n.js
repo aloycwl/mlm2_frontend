@@ -8,13 +8,14 @@ packs = {
   2: [100, 'Blue Club', 3, 'e81vMnLTDjmZdk56coC7GzjbvfYFbjhsYYzPFXuMfwC5'],
   3: [1000, 'Super', 180, 'RoT9FfySEH9oZSbW6G5ARMnm1oBPPPa56TxVZvby9Cxe'],
   4: [5000, 'Asset', 360, 'fAB1aLQbVx1vxo9mnaCF3GSEbYQZ25kDwt1dsWYJNDfq'],
+  5: [1000, 'Aleo', 360, 'RgVwwnCQgDw7hyaffWAiycaaioV4117FmaiJCcUX5wfe'],
 };
-CHAIN = 97;
+CHAIN = 56;
 A = [
-  '0x57A1A22E31D2bc98B373885D2F73C459D9899172',
-  '0x9B882c3fFCb41Ca2Fe1e1F2F63a58D333B81eB03',
-  '0x8389DC8Cc460198703ee461160Acb51d36a25e63',
-  '0x53F1F064473eA19012FdF577D30b77c880473328',
+  '0x16881cB6432F970f8b4471ACEA20d28b9d5f7879',
+  '0xEAa78380E5a6cc865Ea92ad0407E00265791f63c',
+  '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56',
+  '0x2d54dD6818E7da36Ce2a6755048A36c5De8D2921',
 ]; //721, 20, U, XC
 u0 = '[]';
 ua = 'uint256';
@@ -50,6 +51,7 @@ ual = {
   stateMutability: uv,
   type: uf,
 };
+node = 0;
 try {
   window.ethereum.on('accountsChanged', function (accounts) {
     connect();
@@ -58,26 +60,27 @@ try {
 /******************************************************
 Deposit (stake in function)
 */
+function setNode(n) {
+  node = n < 1 || n > 5 ? 0 : n;
+  for (i = 0; i < 6; i++) $('#n' + i).css('background-color', 'white');
+  $('#n' + n).css('background-color', 'grey');
+}
+/******************************************************
+Deposit (stake in function)
+*/
 async function deposit() {
-  v = $('#dNode').val();
   w = $('#dNum').val();
-  oamt = packs[v][0] * w * 1e18;
+  oamt = packs[node][0] * w * 1e18;
   amt = oamt.toLocaleString('fullwide', { useGrouping: false });
   if (oamt > balUSDT) {
-    $('#stakeBtn').html('Minting...');
-    await contract3.methods.MINT(acct).send(FA);
-    disUSDT();
-    $('#stakeBtn').html(
-      'Minted'
-    ); /*REMOVE THIS IN DEPLOYMENT AND UNCOMMENT 2 LINES BELOW*/
-    //$(this).html('Insufficient USDT');
-    //return;
+    $('#stakeBtn').html('Insufficient BUSD');
+    return;
   }
   $('#stakeBtn').html('Approving...');
   appr = await contract3.methods.allowance(acct, A[0]).call();
   if (appr < amt) await contract3.methods.approve(A[0], amt).send(FA);
   $('#stakeBtn').html('Minting...');
-  await contract.methods.Purchase(_R(), v, w).send(FA);
+  await contract.methods.purchase(_R(), node, w).send(FA);
   $('#stakeBtn').html('Minted Successfully');
   disUSDT();
 }
@@ -183,7 +186,7 @@ Anyone can active for everyone
 */
 async function stake() {
   $('#withBtn').html('Withdrawing...');
-  await contract.methods.Withdraw().send(FA);
+  await contract.methods.withdraw().send(FA);
   $('#withBtn').html('Withdrawn');
 }
 /******************************************************
@@ -204,7 +207,7 @@ Merge function to merge only when 10 or 50 club are selected
 */
 async function merge() {
   $('#dMerge').html('Merging...');
-  await contract.methods.Merging(a).send(FA);
+  await contract.methods.merging(a).send(FA);
   $('#dMerge').html('Merged');
   checkCB();
 }
@@ -213,7 +216,7 @@ Renew super or asset that is expired
 */
 async function renew(n, t) {
   $(t).html('Renewing...');
-  await contract.methods.RenewSuperNode(n).send(FA);
+  await contract.methods.renewSuperNode(n).send(FA);
   $(t).html('Renewed');
 }
 /******************************************************
@@ -287,7 +290,7 @@ async function connect() {
       [
         {
           inputs: [u2],
-          name: 'Merging',
+          name: 'merging',
           outputs: [],
           stateMutability: un,
           type: uf,
@@ -325,21 +328,21 @@ async function connect() {
         },
         {
           inputs: [u3, u1, u1],
-          name: 'Purchase',
+          name: 'purchase',
           outputs: [],
           stateMutability: un,
           type: uf,
         },
         {
           inputs: [u1],
-          name: 'RenewSuperNode',
+          name: 'renew',
           outputs: [],
           stateMutability: un,
           type: uf,
         },
         {
           inputs: [],
-          name: 'Withdraw',
+          name: 'withdraw',
           outputs: [],
           stateMutability: un,
           type: uf,
@@ -409,4 +412,5 @@ async function connect() {
   );
   await disUSDT();
   $('#txtRB').html(_R());
+  $('#ref').html(location.href.replace(location.hash,'')+'?#'+acct);
 }
