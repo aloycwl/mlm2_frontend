@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.7.4/web3.min.js"></script>
+    <title>93N Admin Function</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      input,
+      button {
+        width: 90%;
+      }
+      * {
+        margin: 0px;
+        padding: 10px;
+        font-size: large;
+        font-family: tahoma;
+      }
+    </style>
+  </head>
+  <body>
+    <b>[Admin Balanace]</b> BUSD: <a id="lblBusdA"></a> | 93N:
+    <a id="lbl93nA"></a><br />
+    <b>[Exchange Balance]</b> BUSD: <a id="lblBusdE"></a> | 93N:
+    <a id="lbl93nE"></a><br />
+    <b>[Node Balance]</b> BUSD: <a id="lblBusdN"></a> | 93N:
+    <a id="lbl93nN"></a> <br /><br />
+    <p>BUSD (A):</p>
+    <input id="txtBusd" /><br />
+    <p>93N (B):</p>
+    <input id="txt93n" /><br /><br />
+    <button onclick="addL(this)">
+      Add Liquidity to SWAP - <i>Fill both (A) & (B)</i></button
+    ><br /><br />
+    <button onclick="removeL(this)">
+      Remove Liquidit from SWAP - <i>Fill both (A) & (B)</i></button
+    ><br /><br />
+    <button onclick="add93n(this)">
+      Add 93N to Node - <i>Fill (B) only</i></button
+    ><br /><br />
+    <button onclick="removeBusd(this)">
+      Remove BUSD from Node - <i>Fill (A) only</i>
+    </button>
+  </body>
+  <script>
+    CHAIN = 56;
+    A = [
+      '0x16881cB6432F970f8b4471ACEA20d28b9d5f7879',
+      '0xEAa78380E5a6cc865Ea92ad0407E00265791f63c',
+      '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56',
+      '0x2d54dD6818E7da36Ce2a6755048A36c5De8D2921',
+    ]; //721, 20, U, XC
+    u0 = '[]';
+    ua = 'uint256';
+    u1 = { internalType: ua, name: '', type: ua };
+    u2 = { internalType: ua + u0, name: '', type: ua + u0 };
+    ub = 'address';
+    u3 = { internalType: ub, name: '', type: ub };
+    u4 = { internalType: ub + u0, name: '', type: ub + u0 };
+    uc = 'string';
+    u5 = { internalType: uc, name: '', type: uc };
+    u6 = { internalType: uc + u0, name: '', type: uc + u0 };
+    uf = 'function';
+    un = 'nonpayable';
+    uv = 'view';
+    ubo = {
+      inputs: [u3],
+      name: 'balanceOf',
+      outputs: [u1],
+      stateMutability: uv,
+      type: uf,
+    };
+    uap = {
+      inputs: [u3, u1],
+      name: 'approve',
+      outputs: [],
+      stateMutability: un,
+      type: uf,
+    };
+    ual = {
+      inputs: [u3, u3],
+      name: 'allowance',
+      outputs: [u1],
+      stateMutability: uv,
+      type: uf,
+    };
+    function getVal() {
+      amt = BigInt($('#txtBusd').val() * 1e18);
+      amt2 = BigInt($('#txt93n').val() * 1e18);
+    }
+    async function addL(l) {
+      $(l).html('Approving BUSD...');
+      getVal();
+      appr = await cBusd.allowance(acct, A[3]).call();
+      if (appr < amt) await cBusd.approve(A[3], amt).send(FA);
+      $(l).html('Approving 93N...');
+      appr2 = await c93n.allowance(acct, A[3]).call();
+      if (appr2 < amt2) await c93n.approve(A[3], amt2).send(FA);
+      $(l).html('Adding Liquidity to Swap...');
+      await cSwap.AddLiqudity(A[2], A[1], amt, amt2).send(FA);
+      $(l).html('<b>Liquidity Added in Swap</b>');
+    }
+    async function removeL(l) {
+      $(l).html('Removing Liquidity in Swap...');
+      getVal();
+      await cSwap.RemoveLiqudity(A[2], A[1], amt, amt2).send(FA);
+      $(l).html('<b>Liquidity Removed in Swap</b>');
+    }
+    async function add93n(l) {
+      $(l).html('Approving 93N...');
+      getVal();
+      appr2 = await c93n.allowance(acct, A[0]).call();
+      if (appr2 < amt2) await c93n.approve(A[0], amt2).send(FA);
+      $(l).html('Adding 93N to Node...');
+      await cnode.modLiquidity(2, 0, amt2).send(FA);
+      $(l).html('<b>93N Added in Node</b>');
+    }
+    async function removeBusd(l) {
+      $(l).html('Removing BUSD from Node...');
+      getVal();
+      await cnode.modLiquidity(1, amt, 0).send(FA);
+      $(l).html('<b>BUSD Removed in Node</b>');
+    }
+    async function connect() {
+      if (typeof ethereum != 'undefined') {
+        web3 = new Web3(ethereum);
+        acct = await ethereum.request({ method: 'eth_requestAccounts' });
+        acct = acct[0];
+        FA = { from: acct };
+        if ((await web3.eth.net.getId()) != CHAIN) {
+          await ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0x' + CHAIN.toString(16) }],
+          });
+        }
+        contract = new web3.eth.Contract(
+          [
+            {
+              inputs: [u1, u1, u1],
+              name: 'modLiquidity',
+              outputs: [],
+              stateMutability: 'nonpayable',
+              type: 'function',
+            },
+          ],
+          A[0]
+        );
+      }
+      cnode = contract.methods;
+      contract2 = new web3.eth.Contract([ubo, uap, ual], A[1]);
+      c93n = contract2.methods;
+      contract3 = new web3.eth.Contract([ubo, uap, ual], A[2]);
+      cBusd = contract3.methods;
+      contract4 = new web3.eth.Contract(
+        [
+          {
+            inputs: [u3, u3, u1, u1],
+            name: 'AddLiqudity',
+            outputs: [],
+            stateMutability: 'nonpayable',
+            type: 'function',
+          },
+          {
+            inputs: [u3, u3, u1, u1],
+            name: 'RemoveLiqudity',
+            outputs: [],
+            stateMutability: 'nonpayable',
+            type: 'function',
+          },
+          {
+            inputs: [u1],
+            name: 'setFee',
+            outputs: [],
+            stateMutability: 'nonpayable',
+            type: 'function',
+          },
+        ],
+        A[3]
+      );
+      cSwap = contract4.methods;
+      j = {
+        0: ['93nA', contract2, acct],
+        1: ['BusdA', contract3, acct],
+        2: ['93nE', contract2, A[3]],
+        3: ['BusdE', contract3, A[3]],
+        4: ['93nN', contract2, A[0]],
+        5: ['BusdN', contract3, A[0]],
+      };
+      for (i = 0; i < Object.keys(j).length; i++)
+        $('#lbl' + j[i][0]).html(
+          (await j[i][1].methods.balanceOf(j[i][2]).call()) / 1e18
+        );
+    }
+    connect();
+  </script>
+</html>
